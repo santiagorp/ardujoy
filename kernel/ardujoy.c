@@ -28,17 +28,31 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/input.h>
-#include <linux/serio.h>
 #include <linux/init.h>
 
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Notung");
+MODULE_DESCRIPTION("Arduino joystick driver module");
+
+// Parameters can be changed loading the module. Example:
+// #insmod ardujoy.ko ttyDev="/dev/ttyUSB2"
+static char *ttyDev = "/dev/ttyUSB0";
+module_param(ttyDev, charp, S_IRUGO);
+
+static int serial_fd;
+
 static int __init ardujoy_start(void) {
-    printk(KERN_INFO "Loading ardujoy!\n");
+  printk(KERN_INFO "Loading ardujoy!\n");
+  printk(KERN_INFO "Device: %s\n", ttyDev);
+  
+  lin
+
+  return 0;
 }
 
 static void __exit ardujoy_end(void) {
-printk(KERN_INFO "Unloaded ardujoy module\n");
+  printk(KERN_INFO "Unloaded ardujoy module\n");
 }
 
 module_init(ardujoy_start);

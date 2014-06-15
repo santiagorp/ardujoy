@@ -24,6 +24,63 @@ void setup() {
   keyboard2.begin(PS2_2_DAT, PS2_2_IRQ);
 }
 
+void printAxis(int val) {
+  for (int i = -100; i <= 100; i = i + 5) {
+    if ( i == 0) {
+      Serial.print("O");
+    } else if (i < 0 && i <= val || i > 0 && i >= val) {
+      Serial.print("-");
+    } else if (i < 0 && i >= val || i > 0 && i <= val) {
+      Serial.print("*");
+    }
+  }
+}
+
+float getXAxis() {
+  // Resistencia de 100K en la salida
+  float r1 = (1023.0 / (float) analogRead(A1) - 1) * 100000;
+  // Measured 47000 in extreme
+  float val = (r1 - 76000) / 470;
+  float dz = 5;
+  int sign = val >= 0 ? 1 : -1;
+
+  if (abs(val) < dz) {
+    val = 0;
+  } else if (sign > 0 && val > dz) {
+    val = val * .9 - dz;
+  } else if (sign < 0 && val < -dz) {
+    val = val * 1.05 + dz;
+  }
+
+  val = val > 100 ? 100 : val;
+  val = val < -100 ? -100 : val;
+
+  return val;
+}
+
+float getYAxis() {
+  // Resistencia de 100K en la salida
+  float r1 = (1023.0 / (float) analogRead(A0) - 1) * 100000;
+  // Measured 47000 in extreme
+  float val = (r1 - 76000) / -470;
+  float dz = 5;
+  int sign = val >= 0 ? 1 : -1;
+
+  if (abs(val) < dz) {
+    val = 0;
+  } else if (sign > 0 && val > dz) {
+    val = val * .9 - dz;
+  } else if (sign < 0 && val < -dz) {
+    val = val * 1.05 + dz;
+  }
+
+  val = val > 100 ? 100 : val;
+  val = val < -100 ? -100 : val;
+
+  return val;
+}
+
+
 void loop() {
   char c;
   if (keyboard1.available()) {
@@ -34,6 +91,14 @@ void loop() {
     c = keyboard2.read();
     processKeyInput(c);
   }
+  delay(50);
+  
+  float x = getXAxis();
+  float y = getYAxis();
+  printAxis(x);
+  Serial.print("    ");
+  printAxis(y);
+  Serial.println();
 }
 
 void processKeyInput(char c) {
