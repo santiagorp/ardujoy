@@ -95,10 +95,10 @@ void loop() {
   
   float x = getXAxis();
   float y = getYAxis();
-  printAxis(x);
+  /*  printAxis(x);
   Serial.print("    ");
   printAxis(y);
-  Serial.println();
+  Serial.println();*/
 }
 
 void processKeyInput(char c) {
@@ -127,5 +127,146 @@ void processKeyInput(char c) {
 
     // otherwise, just print all normal characters
     Serial.print(c);
+
+    Serial.print(": ");
+    int code = getButtonIndex(c);
+    Serial.println(code);
   }
+}
+
+
+// Get the button number from the keyobard code
+int getButtonIndex(char c) {
+  switch(c) {
+  case '1':
+    return 1;
+  case '2':
+    return 2;
+  case '@':
+    return 3;
+  case '3':
+    return 4;
+  case '4':
+    return 5;
+  case '$':
+    return 6;
+  case '5':
+    return 7;
+  case '%':
+    return 8;
+  case '6':
+    return 9;
+  case '^':
+   return 10;
+  case '7':
+    return 11;
+  case '&':
+    return 12;
+  case '8':
+    return 13;
+  case '*':
+    return 14;
+  case '9':
+    return 15;
+  case '(':
+    return 16;
+  case 'q':
+    return 17;
+  case 'w':
+    return 18;
+  case 'W':
+    return 19;
+  case 'e':
+    return 20;
+  case 'r':
+    return 21;
+  case 'R':
+    return 22;
+  case 't':
+    return 23;
+  case 'T':
+    return 24;
+  case 'y':
+    return 25;
+  case 'Y':
+    return 26;
+  case 'u':
+    return 27;
+  case 'U':
+    return 28;
+  case 'i':
+    return 29;
+  case 'I':
+    return 30;
+  case 'o':
+    return 31;
+  case 'O':
+    return 32;
+  case 'a':
+    return 33;
+  case 's':
+    return 34;
+  case 'S':
+    return 35;
+  case 'd':
+    return 36;
+  case 'f':
+    return 37;
+  case 'F':
+    return 38;
+  case 'g':
+    return 39;
+  case 'G':
+    return 40;
+  case 'h':
+    return 41;
+  case 'H':
+    return 42;
+  case 'j':
+    return 43;
+  case 'J':
+    return 44;
+  case 'k':
+    return 45;
+  case 'K':
+    return 46;
+  case 'l':
+    return 47;
+  case 'L':
+    return 48;
+  case 'z':
+    return 49;
+  case 'x':
+    return 50;
+  case 'X':
+    return 51;
+  case 'c':
+    return 52;
+  case 'v':
+    return 53;
+  case 'V':
+    return 54;
+  case 'b':
+    return 55;
+  case 'B':
+    return 56;
+  case 'n':
+    return 57;
+  case 'N':
+    return 58;
+  case 'm':
+    return 59;
+  case 'M':
+    return 60;
+  case ',':
+    return 61;
+  case '<':
+    return 62;
+  case '.':
+    return 63;
+  case '>':
+    return 64;
+  default:
+    return -1;
+  }  
 }
