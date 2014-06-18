@@ -19,6 +19,7 @@ PS2Keyboard2 keyboard2;
 
 void setup() {
   Serial.begin(57600);
+  while (Serial) ;
 
   keyboard1.begin(PS2_1_DAT, PS2_1_IRQ);
   keyboard2.begin(PS2_2_DAT, PS2_2_IRQ);
@@ -91,7 +92,7 @@ void loop() {
     c = keyboard2.read();
     processKeyInput(c);
   }
-  delay(50);
+  delay(5);
   
   float x = getXAxis();
   float y = getYAxis();

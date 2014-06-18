@@ -344,6 +344,9 @@ void PS2Keyboard1::begin(uint8_t data_pin, uint8_t irq_pin, const PS2Keymap_t &m
   DataPin = data_pin;
   keymap = &map;
 
+  Serial.print("Initialized keyboard 1 on pin: ");
+  Serial.println(irq_pin);
+  
   // initialize the pins
 #ifdef INPUT_PULLUP
   pinMode(irq_pin, INPUT_PULLUP);
