@@ -16,25 +16,42 @@ const int PS2_2_DAT = 5;
 
 PS2Keyboard1 keyboard1;
 PS2Keyboard2 keyboard2;
+JoyState_t joySt;
+
+static int buttons[] = {
+  0,   1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+  0,   1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+};
 
 void setup() {
-  Serial.begin(57600);
-  while (Serial) ;
+#ifdef DEBUG
+  Serial1.begin(57600);
+  Serial1.println("Initializing...");
+#endif
 
   keyboard1.begin(PS2_1_DAT, PS2_1_IRQ);
   keyboard2.begin(PS2_2_DAT, PS2_2_IRQ);
+
+  resetJoystick();
 }
 
 void printAxis(int val) {
   for (int i = -100; i <= 100; i = i + 5) {
     if ( i == 0) {
-      Serial.print("O");
+      Serial1.print("O");
     } else if (i < 0 && i <= val || i > 0 && i >= val) {
-      Serial.print("-");
+      Serial1.print("-");
     } else if (i < 0 && i >= val || i > 0 && i <= val) {
-      Serial.print("*");
+      Serial1.print("*");
     }
   }
+}
+
+void resetJoystick() {
+  // Reset joystick buttons
+  joySt.buttons = 0;
 }
 
 float getXAxis() {
@@ -83,6 +100,8 @@ float getYAxis() {
 
 
 void loop() {
+  resetJoystick();
+
   char c;
   if (keyboard1.available()) {
     c = keyboard1.read();
@@ -96,43 +115,35 @@ void loop() {
   
   float x = getXAxis();
   float y = getYAxis();
-  /*  printAxis(x);
-  Serial.print("    ");
+  
+#ifdef DEBUG
+  /*
+  printAxis(x);
+  Serial1.print("    ");
   printAxis(y);
-  Serial.println();*/
+  Serial1.println();
+  */
+#endif
+
+  // Call Joystick.move
+  Joystick.setState(&joySt);
+
+  delay(5);
 }
 
 void processKeyInput(char c) {
-  // check for some of the special keys
-  if (c == PS2_ENTER) {
-    Serial.println();
-  } else if (c == PS2_TAB) {
-    Serial.print("[Tab]");
-  } else if (c == PS2_ESC) {
-    Serial.print("[ESC]");
-  } else if (c == PS2_PAGEDOWN) {
-    Serial.print("[PgDn]");
-  } else if (c == PS2_PAGEUP) {
-    Serial.print("[PgUp]");
-  } else if (c == PS2_LEFTARROW) {
-    Serial.print("[Left]");
-  } else if (c == PS2_RIGHTARROW) {
-    Serial.print("[Right]");
-  } else if (c == PS2_UPARROW) {
-    Serial.print("[Up]");
-  } else if (c == PS2_DOWNARROW) {
-    Serial.print("[Down]");
-  } else if (c == PS2_DELETE) {
-    Serial.print("[Del]");
-  } else {
-
-    // otherwise, just print all normal characters
-    Serial.print(c);
-
-    Serial.print(": ");
-    int code = getButtonIndex(c);
-    Serial.println(code);
-  }
+  int index = getButtonIndex(c);
+  if (index < 0)
+    return;
+  
+  uint32_t btn = ((uint32_t) 0x01) << buttons[index];
+  joySt.buttons += btn;  
+  
+#ifdef DEBUG
+  Serial1.print("Button: ");
+  Serial1.println(btn, HEX);
+  Serial1.println(index);
+#endif
 }
 
 
@@ -140,133 +151,133 @@ void processKeyInput(char c) {
 int getButtonIndex(char c) {
   switch(c) {
   case '1':
-    return 1;
+    return 0;
   case '2':
-    return 2;
+    return 1;
   case '@':
-    return 3;
+    return 2;
   case '3':
-    return 4;
+    return 3;
   case '4':
-    return 5;
+    return 4;
   case '$':
-    return 6;
+    return 5;
   case '5':
-    return 7;
+    return 6;
   case '%':
-    return 8;
+    return 7;
   case '6':
-    return 9;
+    return 8;
   case '^':
-   return 10;
+   return 9;
   case '7':
-    return 11;
+    return 10;
   case '&':
-    return 12;
+    return 11;
   case '8':
-    return 13;
+    return 12;
   case '*':
-    return 14;
+    return 13;
   case '9':
-    return 15;
+    return 14;
   case '(':
-    return 16;
+    return 15;
   case 'q':
-    return 17;
+    return 16;
   case 'w':
-    return 18;
+    return 17;
   case 'W':
-    return 19;
+    return 18;
   case 'e':
-    return 20;
+    return 19;
   case 'r':
-    return 21;
+    return 20;
   case 'R':
-    return 22;
+    return 21;
   case 't':
-    return 23;
+    return 22;
   case 'T':
-    return 24;
+    return 23;
   case 'y':
-    return 25;
+    return 24;
   case 'Y':
-    return 26;
+    return 25;
   case 'u':
-    return 27;
+    return 26;
   case 'U':
-    return 28;
+    return 27;
   case 'i':
-    return 29;
+    return 28;
   case 'I':
-    return 30;
+    return 29;
   case 'o':
-    return 31;
+    return 30;
   case 'O':
-    return 32;
+    return 31;
   case 'a':
-    return 33;
+    return 32;
   case 's':
-    return 34;
+    return 33;
   case 'S':
-    return 35;
+    return 34;
   case 'd':
-    return 36;
+    return 35;
   case 'f':
-    return 37;
+    return 36;
   case 'F':
-    return 38;
+    return 37;
   case 'g':
-    return 39;
+    return 38;
   case 'G':
-    return 40;
+    return 39;
   case 'h':
-    return 41;
+    return 40;
   case 'H':
-    return 42;
+    return 41;
   case 'j':
-    return 43;
+    return 42;
   case 'J':
-    return 44;
+    return 43;
   case 'k':
-    return 45;
+    return 44;
   case 'K':
-    return 46;
+    return 45;
   case 'l':
-    return 47;
+    return 46;
   case 'L':
-    return 48;
+    return 47;
   case 'z':
-    return 49;
+    return 48;
   case 'x':
-    return 50;
+    return 49;
   case 'X':
-    return 51;
+    return 50;
   case 'c':
-    return 52;
+    return 51;
   case 'v':
-    return 53;
+    return 52;
   case 'V':
-    return 54;
+    return 53;
   case 'b':
-    return 55;
+    return 54;
   case 'B':
-    return 56;
+    return 55;
   case 'n':
-    return 57;
+    return 56;
   case 'N':
-    return 58;
+    return 57;
   case 'm':
-    return 59;
+    return 58;
   case 'M':
-    return 60;
+    return 59;
   case ',':
-    return 61;
+    return 60;
   case '<':
-    return 62;
+    return 61;
   case '.':
-    return 63;
+    return 62;
   case '>':
-    return 64;
+    return 63;
   default:
     return -1;
   }  

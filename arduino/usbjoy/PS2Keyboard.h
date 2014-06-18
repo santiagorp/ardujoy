@@ -26,6 +26,8 @@
 #ifndef PS2Keyboard_h
 #define PS2Keyboard_h
 
+#define DEBUG
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
