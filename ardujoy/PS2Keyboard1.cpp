@@ -63,7 +63,7 @@ static const PS2Keymap_t *keymap=NULL;
 
 static uint8_t keys[256];
 
-void (*PS2Keyboard1::onKeyUp)(char c) = NULL;
+void (*PS2Keyboard1::onKeyEvent)(uint8_t keycode, uint8_t down) = NULL;
 char getChar(uint8_t s, uint8_t state);
 
 // The ISR for the external interrupt
@@ -104,16 +104,20 @@ static inline uint8_t get_scan_code(void)
   uint8_t c, i;
 
   i = tail;
-  if (i == head) return 0;
+  if (i == head)
+    return 0;
   i++;
-  if (i >= BUFFER_SIZE) i = 0;
+  if (i >= BUFFER_SIZE)
+    i = 0;
   c = buffer[i];
   tail = i;
-#ifdef DEBUG_V
+
+#ifdef DEBUG_VERBOSE
   Serial1.print("Scan code: 0x");
   if (c < 16) Serial1.print("0");
   Serial1.println(c, HEX);
 #endif
+
   return c;
 }
 
@@ -165,67 +169,6 @@ const PROGMEM PS2Keymap_t PS2Keymap_US = {
   0
 };
 
-
-const PROGMEM PS2Keymap_t PS2Keymap_German = {
-  // without shift
-  {0, PS2_F9, 0, PS2_F5, PS2_F3, PS2_F1, PS2_F2, PS2_F12,
-   0, PS2_F10, PS2_F8, PS2_F6, PS2_F4, PS2_TAB, '^', 0,
-   0, 0 /*Lalt*/, 0 /*Lshift*/, 0, 0 /*Lctrl*/, 'q', '1', 0,
-   0, 0, 'y', 's', 'a', 'w', '2', 0,
-   0, 'c', 'x', 'd', 'e', '4', '3', 0,
-   0, ' ', 'v', 'f', 't', 'r', '5', 0,
-   0, 'n', 'b', 'h', 'g', 'z', '6', 0,
-   0, 0, 'm', 'j', 'u', '7', '8', 0,
-   0, ',', 'k', 'i', 'o', '0', '9', 0,
-   0, '.', '-', 'l', PS2_o_DIAERESIS, 'p', PS2_SHARP_S, 0,
-   0, 0, PS2_a_DIAERESIS, 0, PS2_u_DIAERESIS, '\'', 0, 0,
-   0 /*CapsLock*/, 0 /*Rshift*/, PS2_ENTER /*Enter*/, '+', 0, '#', 0, 0,
-   0, '<', 0, 0, 0, 0, PS2_BACKSPACE, 0,
-   0, '1', 0, '4', '7', 0, 0, 0,
-   '0', '.', '2', '5', '6', '8', PS2_ESC, 0 /*NumLock*/,
-   PS2_F11, '+', '3', '-', '*', '9', PS2_SCROLL, 0,
-   0, 0, 0, PS2_F7 },
-  // with shift
-  {0, PS2_F9, 0, PS2_F5, PS2_F3, PS2_F1, PS2_F2, PS2_F12,
-   0, PS2_F10, PS2_F8, PS2_F6, PS2_F4, PS2_TAB, PS2_DEGREE_SIGN, 0,
-   0, 0 /*Lalt*/, 0 /*Lshift*/, 0, 0 /*Lctrl*/, 'Q', '!', 0,
-   0, 0, 'Y', 'S', 'A', 'W', '"', 0,
-   0, 'C', 'X', 'D', 'E', '$', PS2_SECTION_SIGN, 0,
-   0, ' ', 'V', 'F', 'T', 'R', '%', 0,
-   0, 'N', 'B', 'H', 'G', 'Z', '&', 0,
-   0, 0, 'M', 'J', 'U', '/', '(', 0,
-   0, ';', 'K', 'I', 'O', '=', ')', 0,
-   0, ':', '_', 'L', PS2_O_DIAERESIS, 'P', '?', 0,
-   0, 0, PS2_A_DIAERESIS, 0, PS2_U_DIAERESIS, '`', 0, 0,
-   0 /*CapsLock*/, 0 /*Rshift*/, PS2_ENTER /*Enter*/, '*', 0, '\'', 0, 0,
-   0, '>', 0, 0, 0, 0, PS2_BACKSPACE, 0,
-   0, '1', 0, '4', '7', 0, 0, 0,
-   '0', '.', '2', '5', '6', '8', PS2_ESC, 0 /*NumLock*/,
-   PS2_F11, '+', '3', '-', '*', '9', PS2_SCROLL, 0,
-   0, 0, 0, PS2_F7 },
-  1,
-  // with altgr
-  {0, PS2_F9, 0, PS2_F5, PS2_F3, PS2_F1, PS2_F2, PS2_F12,
-   0, PS2_F10, PS2_F8, PS2_F6, PS2_F4, PS2_TAB, 0, 0,
-   0, 0 /*Lalt*/, 0 /*Lshift*/, 0, 0 /*Lctrl*/, '@', 0, 0,
-   0, 0, 0, 0, 0, 0, PS2_SUPERSCRIPT_TWO, 0,
-   0, 0, 0, 0, PS2_CURRENCY_SIGN, 0, PS2_SUPERSCRIPT_THREE, 0,
-   0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, PS2_MICRO_SIGN, 0, 0, '{', '[', 0,
-   0, 0, 0, 0, 0, '}', ']', 0,
-   0, 0, 0, 0, 0, 0, '\\', 0,
-   0, 0, 0, 0, 0, 0, 0, 0,
-   0 /*CapsLock*/, 0 /*Rshift*/, PS2_ENTER /*Enter*/, '~', 0, '#', 0, 0,
-   0, '|', 0, 0, 0, 0, PS2_BACKSPACE, 0,
-   0, '1', 0, '4', '7', 0, 0, 0,
-   '0', '.', '2', '5', '6', '8', PS2_ESC, 0 /*NumLock*/,
-   PS2_F11, '+', '3', '-', '*', '9', PS2_SCROLL, 0,
-   0, 0, 0, PS2_F7 }
-};
-
-
-
 #define BREAK     0x01
 #define MODIFIER  0x02
 #define SHIFT_L   0x04
@@ -235,7 +178,7 @@ const PROGMEM PS2Keymap_t PS2Keymap_German = {
 
 // Notifies that the key was pressed.
 // Returns 0 if the key was already in pressed state (to avoid repeat)
-int keyPressed(uint8_t code, uint8_t state) {
+int PS2Keyboard1::keyPressed(uint8_t code, uint8_t state) {
   if (code == 0x12 || code == 0x59)
     return 0;
 
@@ -243,6 +186,7 @@ int keyPressed(uint8_t code, uint8_t state) {
     return 0;
   } else {    
     keys[code] = 1;
+    (*onKeyEvent)(code, 1);
     return 1;
   }
 }
@@ -253,8 +197,7 @@ void PS2Keyboard1::keyReleased(uint8_t code, uint8_t state) {
     return;
   
   keys[code] = 0;
-  char c = getChar(code, state);
-  (*onKeyUp)(c);
+  (*onKeyEvent)(code, 0);
 }
 
 char PS2Keyboard1::getChar(uint8_t s, uint8_t state) {
@@ -383,9 +326,9 @@ PS2Keyboard1::PS2Keyboard1() {
   // nothing to do here, begin() does it all
 }
 
- void PS2Keyboard1::begin(uint8_t data_pin, uint8_t irq_pin, void (*onKeyUp)(char), const PS2Keymap_t &map) {
+void PS2Keyboard1::begin(uint8_t data_pin, uint8_t irq_pin, void (*onKeyEvent)(uint8_t, uint8_t), const PS2Keymap_t &map) {
   uint8_t irq_num=0;
-  PS2Keyboard1::onKeyUp = onKeyUp;
+  PS2Keyboard1::onKeyEvent = onKeyEvent;
 
   for (int i = 0; i < 256; i++)
     keys[i] = 0;

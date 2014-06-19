@@ -27,6 +27,7 @@
 #define PS2Keyboard_h
 
 #define DEBUG
+//#define DEBUG_VERBOSE
 
 #define KEY_DOWN 0x01
 #define KEY_UP   0x00
@@ -200,7 +201,7 @@ class PS2Keyboard1 {
      * setting the pin modes correctly and driving those needed to high.
      * The propably best place to call this method is in the setup routine.
      */
-    static void begin(uint8_t dataPin, uint8_t irq_pin, void (*onkeyUp)(char), const PS2Keymap_t &map = PS2Keymap_US);
+    static void begin(uint8_t dataPin, uint8_t irq_pin, void (*onKeyEvent)(uint8_t, uint8_t), const PS2Keymap_t &map = PS2Keymap_US);
 
     /**
      * Returns true if there is a char to be read, false if not.
@@ -215,9 +216,10 @@ class PS2Keyboard1 {
 
  private:
     static char get_iso8859_code(uint8_t* keydown);    
-    static void (*onKeyUp)(char c);
+    static void (*onKeyEvent)(uint8_t c, uint8_t down);
     static char getChar(uint8_t s, uint8_t state);
     static void keyReleased(uint8_t code, uint8_t state);
+    static int keyPressed(uint8_t code, uint8_t state);
 };
 
 class PS2Keyboard2 {
