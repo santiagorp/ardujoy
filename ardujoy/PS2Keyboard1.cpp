@@ -61,6 +61,11 @@ static uint8_t CharBuffer=0;
 static uint8_t UTF8next=0;
 static const PS2Keymap_t *keymap=NULL;
 
+static uint8_t keys[256];
+
+void (*PS2Keyboard1::onKeyUp)(char c) = NULL;
+char getChar(uint8_t s, uint8_t state);
+
 // The ISR for the external interrupt
 void ps2interrupt1(void)
 {
@@ -104,6 +109,11 @@ static inline uint8_t get_scan_code(void)
   if (i >= BUFFER_SIZE) i = 0;
   c = buffer[i];
   tail = i;
+#ifdef DEBUG_V
+  Serial1.print("Scan code: 0x");
+  if (c < 16) Serial1.print("0");
+  Serial1.println(c, HEX);
+#endif
   return c;
 }
 
@@ -223,48 +233,32 @@ const PROGMEM PS2Keymap_t PS2Keymap_German = {
 #define ALTGR     0x10
 #define CTRL      0x20
 
-static char get_iso8859_code(void)
-{
-  static uint8_t state=0;
-  uint8_t s;
-  char c;
+// Notifies that the key was pressed.
+// Returns 0 if the key was already in pressed state (to avoid repeat)
+int keyPressed(uint8_t code, uint8_t state) {
+  if (code == 0x12 || code == 0x59)
+    return 0;
 
-  while (1) {
-    s = get_scan_code();
-    if (!s) return 0;
-    if (s == 0xF0) {
-      state |= BREAK;
-    } else if (s == 0xE0) {
-      state |= MODIFIER;
-    } else {
-      if (state & BREAK) {
-        if (s == 0x12) {
-          state &= ~SHIFT_L;
-        } else if (s == 0x59) {
-          state &= ~SHIFT_R;
-        } else if (s == 0x14) {
-          state &= ~CTRL;
-        } else if (s == 0x11 && (state & MODIFIER)) {
-          state &= ~ALTGR;
-        }
-        // CTRL, ALT & WIN keys could be added
-        // but is that really worth the overhead?
-        state &= ~(BREAK | MODIFIER);
-        continue;
-      }
-      if (s == 0x12) {
-        state |= SHIFT_L;
-        continue;
-      } else if (s == 0x59) {
-        state |= SHIFT_R;
-        continue;
-      } else if (s == 0x14) {
-        state |= CTRL;
-        continue;
-      } else if (s == 0x11 && (state & MODIFIER)) {
-        state |= ALTGR;
-      }
-      c = 0;
+  if (keys[code]) {
+    return 0;
+  } else {    
+    keys[code] = 1;
+    return 1;
+  }
+}
+
+// Notifies that the key was released
+void PS2Keyboard1::keyReleased(uint8_t code, uint8_t state) {
+  if (code == 0x12 || code == 0x59)
+    return;
+  
+  keys[code] = 0;
+  char c = getChar(code, state);
+  (*onKeyUp)(c);
+}
+
+char PS2Keyboard1::getChar(uint8_t s, uint8_t state) {
+      char c = 0;
       if (state & MODIFIER) {
         switch (s) {
         case 0x70: c = PS2_INSERT;      break;
@@ -299,20 +293,71 @@ static char get_iso8859_code(void)
         else if (c == PS2_ENTER)
           c = PS2_LINEFEED;
       }
+   return c;
+}
+
+char PS2Keyboard1::get_iso8859_code(uint8_t* keydown)
+{
+  static uint8_t state=0;
+  uint8_t s;
+  char c;
+
+  while (1) {
+    s = get_scan_code();
+    if (!s) return 0;
+    if (s == 0xF0) {
+      state |= BREAK;
+    } else if (s == 0xE0) {
+      state |= MODIFIER;
+    } else {
+      if (state & BREAK) {
+        if (s == 0x12) {
+          state &= ~SHIFT_L;
+        } else if (s == 0x59) {
+          state &= ~SHIFT_R;
+        } else if (s == 0x14) {
+          state &= ~CTRL;
+        } else if (s == 0x11 && (state & MODIFIER)) {
+          state &= ~ALTGR;
+        }
+
+        keyReleased(s, state);
+        
+        // CTRL, ALT & WIN keys could be added
+        // but is that really worth the overhead?
+        state &= ~(BREAK | MODIFIER);
+        continue;
+      }
+      if (s == 0x12) {
+        state |= SHIFT_L;
+        continue;
+      } else if (s == 0x59) {
+        state |= SHIFT_R;
+        continue;
+      } else if (s == 0x14) {
+        state |= CTRL;
+        continue;
+      } else if (s == 0x11 && (state & MODIFIER)) {
+        state |= ALTGR;
+      }
+      c = getChar(s, state);
       state &= ~(BREAK | MODIFIER);
-      if (c) return c;
+      if (c && keyPressed(s, state)) {
+        return c;
+      }
     }
   }
 }
 
 bool PS2Keyboard1::available() {
+  uint8_t keyDown = 0;
   if (CharBuffer || UTF8next) return true;
-  CharBuffer = get_iso8859_code();
+  CharBuffer = get_iso8859_code(&keyDown);
   if (CharBuffer) return true;
   return false;
 }
 
-int PS2Keyboard1::read() {
+int PS2Keyboard1::read(uint8_t* keyDown) {
   uint8_t result;
 
   result = UTF8next;
@@ -323,7 +368,7 @@ int PS2Keyboard1::read() {
     if (result) {
       CharBuffer = 0;
     } else {
-      result = get_iso8859_code();
+      result = get_iso8859_code(keyDown);
     }
     if (result >= 128) {
       UTF8next = (result & 0x3F) | 0x80;
@@ -338,8 +383,12 @@ PS2Keyboard1::PS2Keyboard1() {
   // nothing to do here, begin() does it all
 }
 
-void PS2Keyboard1::begin(uint8_t data_pin, uint8_t irq_pin, const PS2Keymap_t &map) {
+ void PS2Keyboard1::begin(uint8_t data_pin, uint8_t irq_pin, void (*onKeyUp)(char), const PS2Keymap_t &map) {
   uint8_t irq_num=0;
+  PS2Keyboard1::onKeyUp = onKeyUp;
+
+  for (int i = 0; i < 256; i++)
+    keys[i] = 0;
 
   DataPin = data_pin;
   keymap = &map;

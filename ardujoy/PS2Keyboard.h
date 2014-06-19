@@ -28,6 +28,9 @@
 
 #define DEBUG
 
+#define KEY_DOWN 0x01
+#define KEY_UP   0x00
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -197,8 +200,8 @@ class PS2Keyboard1 {
      * setting the pin modes correctly and driving those needed to high.
      * The propably best place to call this method is in the setup routine.
      */
-    static void begin(uint8_t dataPin, uint8_t irq_pin, const PS2Keymap_t &map = PS2Keymap_US);
-    
+    static void begin(uint8_t dataPin, uint8_t irq_pin, void (*onkeyUp)(char), const PS2Keymap_t &map = PS2Keymap_US);
+
     /**
      * Returns true if there is a char to be read, false if not.
      */
@@ -208,7 +211,13 @@ class PS2Keyboard1 {
      * Returns the char last read from the keyboard.
      * If there is no char availble, -1 is returned.
      */
-    static int read();
+    static int read(uint8_t* keyDown);
+
+ private:
+    static char get_iso8859_code(uint8_t* keydown);    
+    static void (*onKeyUp)(char c);
+    static char getChar(uint8_t s, uint8_t state);
+    static void keyReleased(uint8_t code, uint8_t state);
 };
 
 class PS2Keyboard2 {

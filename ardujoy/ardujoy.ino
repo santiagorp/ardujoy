@@ -31,7 +31,7 @@ void setup() {
   Serial1.println("Initializing...");
 #endif
 
-  keyboard1.begin(PS2_1_DAT, PS2_1_IRQ);
+  keyboard1.begin(PS2_1_DAT, PS2_1_IRQ, &onKeyUp1);
   keyboard2.begin(PS2_2_DAT, PS2_2_IRQ);
 
   resetJoystick();
@@ -103,13 +103,14 @@ void loop() {
   resetJoystick();
 
   char c;
-  if (keyboard1.available()) {
-    c = keyboard1.read();
-    processKeyInput(c);
+  uint8_t keyDown;
+  if (keyboard1.available()) {    
+    c = keyboard1.read(&keyDown);
+    processKeyInput(c, keyDown);
   }
   if (keyboard2.available()) {
     c = keyboard2.read();
-    processKeyInput(c);
+    processKeyInput(c, keyDown);
   }
   delay(5);
   
@@ -131,18 +132,31 @@ void loop() {
   delay(5);
 }
 
-void processKeyInput(char c) {
+// Callback on key up
+void onKeyUp1(char c) {
+  int index = getButtonIndex(c);
+#ifdef DEBUG  
+  Serial1.print("Button: ");
+  Serial1.print(index);
+  Serial1.println(" UP");
+#endif
+}
+
+void processKeyInput(char c, uint8_t keyDown) {
   int index = getButtonIndex(c);
   if (index < 0)
     return;
   
-  uint32_t btn = ((uint32_t) 0x01) << buttons[index];
-  joySt.buttons += btn;  
+  uint32_t btn = ((uint32_t) keyDown) << buttons[index];
+  joySt.buttons = joySt.buttons | btn;  
   
 #ifdef DEBUG
   Serial1.print("Button: ");
-  Serial1.println(btn, HEX);
-  Serial1.println(index);
+  Serial1.print(index);
+  if (keyDown)
+    Serial1.println(" DOWN");
+  else
+    Serial1.println(" UP");
 #endif
 }
 
