@@ -100,8 +100,6 @@ float getYAxis() {
 
 
 void loop() {
-  resetJoystick();
-
   char c;
   uint8_t keyDown;
   if (keyboard1.available()) {    
@@ -133,6 +131,17 @@ void loop() {
 // Callback on key up
 void onKeyEvent(uint8_t keycode, uint8_t down) {
   int index = getButtonIndex(keycode);
+
+  if (index < 0 || index > 63)
+    return;
+  
+  uint32_t btn = ((uint32_t) 0x01) << buttons[index];
+  if (down) {
+    joySt.buttons = joySt.buttons | btn;  
+  } else {
+    joySt.buttons = joySt.buttons & (~btn);  
+  }
+  
 #ifdef DEBUG  
   Serial1.print("Button: ");
   Serial1.print(index);
